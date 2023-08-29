@@ -405,11 +405,12 @@ function App() {
   ]
   const contractAddress = '0x4f6005E36BD3A4FCf55997bF8a1AFD689E58AF6e'
   const { contract } = useContract(contractAddress);
-  const { data, isLoading, error } = useContractRead(contract, "ethergth");
+  const { data, isLoading, error } = useContractRead(contract, "remainToken");
   const [inputValue, setInputValue] = useState('');
   // Mengatur nilai input saat komponen di-render
   useEffect(() => {
     setInputValue(0.1);
+
   }, []);
 
   const handleInputChange = (e) => {
@@ -419,7 +420,9 @@ function App() {
   const setMax = () => {
     setInputValue(1);
   };
-
+  function hexToDec(hex) {
+    return parseInt(hex, 16);
+  }
   const handleSubmit = (e) => {
     e.preventDefault();
     // Lakukan sesuatu dengan nilai input yang sudah diambil
@@ -452,16 +455,19 @@ function App() {
           </div>
           <div className='raised'>
             <img src="https://phantasmrealm.com/wp-content/uploads/2023/07/Bangungan.png" />
-            <h3>Total Raised<br /><strong>{data}
-              {/* <Web3Button
+            <h3>Total Raised<br /><strong>
+              <Web3Button
                 contractAbi={abi}
                 contractAddress={contractAddress} // Your smart contract address
                 action={async (contract) => {
-                  contract
+                  //  console.log( await contract.call("remainToken")._hex)
+                  var datax = await contract.call("remainToken")
+                  console.log(hexToDec(datax._hex))
+
                 }}
               >
                 Execute Action
-              </Web3Button> */}
+              </Web3Button>
             </strong></h3>
           </div>
           <div className='raised'>
