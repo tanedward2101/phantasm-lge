@@ -1,12 +1,13 @@
 import logo from './logo.svg';
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { ConnectWallet, ThirdwebProvider, useContractRead, useContract, useAddress, Web3Button } from "@thirdweb-dev/react";
-
+import { ConnectWallet, ThirdwebProvider, useContractRead, useContract, useAddress, Web3Button, useContractWrite } from "@thirdweb-dev/react";
+import { utils } from "ethers"
 // Your smart contract address
 
 function App() {
   const address = useAddress();
+  //0x4f6005E36BD3A4FCf55997bF8a1AFD689E58AF6e
   const abi = [
     {
       "inputs": [
@@ -114,6 +115,10 @@ function App() {
       "type": "event"
     },
     {
+      "stateMutability": "payable",
+      "type": "fallback"
+    },
+    {
       "inputs": [],
       "name": "TKN",
       "outputs": [
@@ -154,22 +159,29 @@ function App() {
     },
     {
       "inputs": [],
-      "name": "claimToken",
+      "name": "claimSession",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "claimSwitch",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
     },
     {
       "inputs": [],
-      "name": "ethergth",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
+      "name": "claimToken",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
@@ -181,19 +193,6 @@ function App() {
         }
       ],
       "name": "etherneded",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "ethgathered",
       "outputs": [
         {
           "internalType": "uint256",
@@ -316,6 +315,19 @@ function App() {
     },
     {
       "inputs": [],
+      "name": "totalContribution",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "totalRaised",
       "outputs": [
         {
@@ -401,18 +413,39 @@ function App() {
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
+    },
+    {
+      "stateMutability": "payable",
+      "type": "receive"
     }
   ]
-  const contractAddress = '0x4f6005E36BD3A4FCf55997bF8a1AFD689E58AF6e'
+  const contractAddress = '0xfD858bA6Fff21913B37D3396c53fFec9F5baDC95'
   const { contract } = useContract(contractAddress);
-  const { data, isLoading, error } = useContractRead(contract, "remainToken");
+  console.log(contract)
+  const { data, isLoading, error } = useContractRead(contract, "totalContribution");
+  const { mutateAsync, isLoadingwrite, errorwrite } = useContractWrite(
+    contract,
+    "buy",
+  );
+  const [tokenGained, setTokenGained] = useState(8000);
+
+  //const { data2, isLoading2, error2 } = useContractRead(contract, "");
+  const [totalRaisedETH, setTotalRaised] = useState(0)
   const [inputValue, setInputValue] = useState('');
   // Mengatur nilai input saat komponen di-render
   useEffect(() => {
-    setInputValue(0.1);
+    setInputValue(0.01);
 
   }, []);
 
+  useEffect(() => {
+    console.log("ERROR:", errorwrite)
+
+  }, [errorwrite]);
+
+  useEffect(() => {
+    setTokenGained(Math.round(inputValue / 0.00000125))
+  }, [inputValue])
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
   };
@@ -420,9 +453,11 @@ function App() {
   const setMax = () => {
     setInputValue(1);
   };
+
   function hexToDec(hex) {
     return parseInt(hex, 16);
   }
+
   const handleSubmit = (e) => {
     e.preventDefault();
     // Lakukan sesuatu dengan nilai input yang sudah diambil
@@ -455,20 +490,12 @@ function App() {
           </div>
           <div className='raised'>
             <img src="https://phantasmrealm.com/wp-content/uploads/2023/07/Bangungan.png" />
-            <h3>Total Raised<br /><strong>
-              <Web3Button
-                contractAbi={abi}
-                contractAddress={contractAddress} // Your smart contract address
-                action={async (contract) => {
-                  //  console.log( await contract.call("remainToken")._hex)
-                  var datax = await contract.call("remainToken")
-                  console.log(hexToDec(datax._hex))
+            <h3>Total Raised<br />
+              <strong>
 
-                }}
-              >
-                Execute Action
-              </Web3Button>
-            </strong></h3>
+                {isLoading ? <p>Loading</p> : hexToDec(data._hex) / Math.pow(10, 18)} ETH
+
+              </strong></h3>
           </div>
           <div className='raised'>
             <img src="https://phantasmrealm.com/wp-content/uploads/2023/07/COIN_PTSM_LOGO-1.png" />
@@ -495,7 +522,7 @@ function App() {
               <div className='form-group'>
                 <input type="number"
                   value={inputValue}
-                  onChange={handleInputChange} min={0.1} step={0.1} max={1} maxLength={1} className='form-input' id="sale" placeholder="Masukkan teks di sini..." />
+                  onChange={handleInputChange} min={0.01} step={0.01} max={1} maxLength={1} className='form-input' id="sale" placeholder="Masukkan teks di sini..." /> ETH
                 <button className='pull-right btn-submit' type='button' onClick={setMax}>MAX</button>
               </div>
               <div className="grid grid-cols-2 gap-2 p-5">
@@ -504,6 +531,7 @@ function App() {
                     Min Allocation :<br /><br />
                     MAx Allocation :<br /><br />
                     Your Contribution :<br /><br />
+                    {/* Token Gained: {tokenGained}<br /><br /> */}
                   </h3>
                 </div>
                 <div className='raised-desc pull-right'>
@@ -514,15 +542,30 @@ function App() {
                   </h3>
                 </div>
               </div>
+              <Web3Button
+                contractAbi={abi}
+                className='btn-submit text-center whtColor'
+                contractAddress={contractAddress} // Your smart contract address
+                action={() =>
+                  mutateAsync({
+                    args: [tokenGained],
+                    overrides: {
+                      gasLimit: 1000000, // override default gas limit
+                      value: utils.parseEther(inputValue), // send 0.1 native token with the contract call
+                    },
+                  })
+                }
+              >
+                Submit
+              </Web3Button>
 
-              <button className='btn-submit text-center' type="submit">SUBMIT</button>
             </form>
 
 
           </div>
         </div>
-      </header>
-    </div>
+      </header >
+    </div >
 
   );
 }
